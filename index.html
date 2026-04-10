@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de SUVs no Brasil: Foco no Fiat Pulse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm Neutrals with Terracotta Accents (Stone, Orange) -->
+    <!-- Application Structure Plan: The SPA is structured into three main thematic sections to guide the user from a macro perspective to a micro analysis. 1. Market Overview (macro context of SUVs in Brazil), 2. The Cost-Benefit winner (introducing the Fiat Pulse), 3. Interactive Version Deep Dive (micro analysis allowing users to compare specific trims of the Pulse dynamically), and 4. Comparison Table (for quick scanning). This dashboard-like approach allows users to understand the "why" before exploring the "what". -->
+    <!-- Visualization & Content Choices: 
+        1. Market Overview -> Show competitive landscape -> Bar Chart (Chart.js) -> Easy comparison of top sellers. 
+        2. Version Deep Dive -> Compare attributes of a single car version -> Radar Chart (Chart.js) -> Visually demonstrates trade-offs between economy, performance, comfort, and tech. 
+        3. Feature Lists -> Compare specific equipment -> Interactive text/list updates (Vanilla JS) -> Keeps the UI clean by only showing details for the selected version.
+        4. Complete Overview -> Side-by-side comparison -> HTML Table -> Best for dense, structured data scanning.
+        Confirming NO SVG/Mermaid used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f5f5f4; color: #292524; }
+        
+        /* Strict Chart Container Styling as Requested */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        /* Custom Scrollbar for table */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #e7e5e4; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #a8a29e; 
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navigation / Header -->
+    <header class="bg-stone-900 text-stone-50 py-6 px-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">AutoData BR 🚗</h1>
+                <p class="text-stone-400 text-sm mt-1">Análise de Mercado & Custo-Benefício de SUVs</p>
+            </div>
+            <nav class="mt-4 md:mt-0 flex gap-4 text-sm font-medium">
+                <a href="#mercado" class="hover:text-orange-400 transition-colors">O Mercado</a>
+                <a href="#pulse" class="hover:text-orange-400 transition-colors">Raio-X: Fiat Pulse</a>
+                <a href="#tabela" class="hover:text-orange-400 transition-colors">Tabela Comparativa</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8 space-y-16">
+
+        <!-- Section 1: Market Overview -->
+        <section id="mercado" class="space-y-6">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-stone-200">
+                <h2 class="text-3xl font-bold text-stone-800 mb-4">O Cenário dos SUVs no Brasil</h2>
+                <p class="text-stone-600 mb-6 leading-relaxed">
+                    A categoria de SUVs (Veículos Utilitários Esportivos) domina o mercado automotivo brasileiro. Consumidores buscam posição de dirigir elevada, robustez para enfrentar nossas vias e espaço interno. No entanto, com a inflação automotiva, o fator <strong>custo-benefício</strong> tornou-se o principal decisor de compra. Modelos compactos lideram as vendas por equilibrarem preço, economia de combustível e tecnologia.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mt-8">
+                    <div class="w-full">
+                        <h3 class="text-lg font-semibold text-center mb-4 text-stone-700">Top SUVs Compactos Mais Buscados (Estimativa)</h3>
+                        <div class="chart-container">
+                            <canvas id="marketChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-stone-50 p-6 rounded-xl border border-stone-100">
+                        <h3 class="text-xl font-bold text-orange-700 mb-3">🏆 O Veredito de Custo-Benefício</h3>
+                        <p class="text-stone-700 leading-relaxed mb-4">
+                            Ao cruzar dados de preço inicial, custo de manutenção, consumo (Inmetro) e lista de equipamentos de série, notamos uma disputa acirrada.
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">✅</span>
+                                <span><strong>Nissan Kicks:</strong> Excelente para quem busca consumo baixo e confiabilidade mecânica a longo prazo.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">✅</span>
+                                <span><strong>Chevrolet Tracker:</strong> Ótimo pacote de conectividade e motorização turbo eficiente.</span>
+                            </li>
+                            <li class="flex items-start gap-2 bg-orange-100 p-2 rounded-lg border border-orange-200">
+                                <span class="text-xl">⭐</span>
+                                <span><strong>Fiat Pulse:</strong> Destaca-se como o <strong>melhor custo-benefício de entrada</strong>. Possui o menor preço inicial do segmento, design moderno e um pacote de série muito generoso desde a versão básica.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Fiat Pulse Deep Dive -->
+        <section id="pulse" class="space-y-6">
+            <div class="text-center max-w-3xl mx-auto mb-10">
+                <h2 class="text-3xl font-bold text-stone-800">Raio-X: Fiat Pulse</h2>
+                <p class="text-stone-600 mt-4">
+                    Explore cada versão do Fiat Pulse. Entenda exatamente o que muda em motorização, equipamentos e preço para encontrar a versão ideal para o seu perfil e bolso.
+                </p>
+            </div>
+
+            <!-- Interactive Selector -->
+            <div class="bg-stone-800 p-2 rounded-xl shadow-lg flex flex-wrap justify-center gap-2 sticky top-[88px] z-40">
+                <button onclick="selectVersion('drive_mt')" id="btn-drive_mt" class="version-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-orange-500 text-white shadow-md">Drive 1.3 MT</button>
+                <button onclick="selectVersion('drive_cvt')" id="btn-drive_cvt" class="version-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-stone-300 hover:bg-stone-700 hover:text-white">Drive 1.3 CVT</button>
+                <button onclick="selectVersion('audace')" id="btn-audace" class="version-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-stone-300 hover:bg-stone-700 hover:text-white">Audace 1.0T</button>
+                <button onclick="selectVersion('impetus')" id="btn-impetus" class="version-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-stone-300 hover:bg-stone-700 hover:text-white">Impetus 1.0T</button>
+                <button onclick="selectVersion('abarth')" id="btn-abarth" class="version-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-stone-300 hover:bg-stone-700 hover:text-white border border-red-600/30 hover:border-red-500">Abarth 1.3T</button>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div class="bg-white rounded-2xl shadow-md border border-stone-200 overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2">
+                    
+                    <!-- Left: Details -->
+                    <div class="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-stone-200 flex flex-col justify-center">
+                        <div class="mb-2 inline-block px-3 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase tracking-wider rounded-full" id="dyn-category">Entrada / Manual</div>
+                        <h3 class="text-4xl font-extrabold text-stone-900 mb-2" id="dyn-name">Drive 1.3 MT</h3>
+                        <p class="text-3xl font-light text-orange-600 mb-8" id="dyn-price">R$ 104.990</p>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">Motor & Câmbio</h4>
+                                <p class="text-stone-800 font-medium flex items-center gap-2">⚙️ <span id="dyn-engine">1.3 Firefly Flex (107 cv) - Manual de 5 marchas</span></p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-3">Principais Diferenciais (O que esta versão traz):</h4>
+                                <ul class="space-y-2 text-stone-700" id="dyn-features">
+                                    <li class="flex gap-2"><span>🔹</span> Central multimídia 8.4" com Apple CarPlay e Android Auto sem fio</li>
+                                    <li class="flex gap-2"><span>🔹</span> Faróis e lanternas em LED</li>
+                                    <li class="flex gap-2"><span>🔹</span> Ar-condicionado automático e digital</li>
+                                    <li class="flex gap-2"><span>🔹</span> 4 Airbags e Controle de Tração (TC+)</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-4 bg-stone-50 rounded-xl border border-stone-200 mt-4">
+                                <p class="text-sm text-stone-600 italic" id="dyn-summary">"A opção para quem quer economizar na compra e no posto de combustível. Única versão com pedal de embreagem."</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Radar Chart -->
+                    <div class="p-8 lg:p-10 flex flex-col justify-center items-center bg-stone-50/50">
+                        <h4 class="text-lg font-bold text-stone-700 mb-6 text-center">Perfil da Versão</h4>
+                        <div class="chart-container w-full">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                        <p class="text-xs text-stone-400 mt-4 text-center max-w-sm">Gráfico demonstra o foco da versão. Notas de 1 a 10 baseadas em potência, consumo, itens de série e luxo interno.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Comparison Table -->
+        <section id="tabela" class="space-y-6 pb-12">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-stone-200">
+                <h2 class="text-2xl font-bold text-stone-800 mb-2">Comparativo Lado a Lado</h2>
+                <p class="text-stone-600 mb-6">Uma visão geral de todas as versões do Fiat Pulse para facilitar sua escolha final.</p>
+                
+                <div class="overflow-x-auto custom-scrollbar pb-4">
+                    <table class="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr class="bg-stone-100 text-stone-700 uppercase text-xs font-bold tracking-wider">
+                                <th class="p-4 rounded-tl-xl">Versão</th>
+                                <th class="p-4">Preço (Aprox.)</th>
+                                <th class="p-4">Motor / Potência</th>
+                                <th class="p-4">Câmbio</th>
+                                <th class="p-4 rounded-tr-xl">Foco Principal</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-stone-800 divide-y divide-stone-200">
+                            <tr class="hover:bg-stone-50 transition-colors">
+                                <td class="p-4 font-bold">Drive 1.3 MT</td>
+                                <td class="p-4 text-orange-600 font-semibold">R$ 104.990</td>
+                                <td class="p-4">1.3 Aspirado (107 cv)</td>
+                                <td class="p-4">Manual (5 marchas)</td>
+                                <td class="p-4">Menor preço e máxima economia.</td>
+                            </tr>
+                            <tr class="hover:bg-stone-50 transition-colors">
+                                <td class="p-4 font-bold">Drive 1.3 CVT</td>
+                                <td class="p-4 text-orange-600 font-semibold">R$ 111.990</td>
+                                <td class="p-4">1.3 Aspirado (107 cv)</td>
+                                <td class="p-4">Automático (CVT)</td>
+                                <td class="p-4">Conforto do automático mais barato.</td>
+                            </tr>
+                            <tr class="hover:bg-stone-50 transition-colors">
+                                <td class="p-4 font-bold">Audace 1.0T</td>
+                                <td class="p-4 text-orange-600 font-semibold">R$ 122.990</td>
+                                <td class="p-4">1.0 Turbo (130 cv)</td>
+                                <td class="p-4">Automático (CVT)</td>
+                                <td class="p-4">Melhor custo-benefício com motor turbo e segurança ativa (ADAS).</td>
+                            </tr>
+                            <tr class="hover:bg-stone-50 transition-colors">
+                                <td class="p-4 font-bold">Impetus 1.0T</td>
+                                <td class="p-4 text-orange-600 font-semibold">R$ 135.990</td>
+                                <td class="p-4">1.0 Turbo (130 cv)</td>
+                                <td class="p-4">Automático (CVT)</td>
+                                <td class="p-4">Luxo, painel digital, bancos em couro e teto bitom.</td>
+                            </tr>
+                            <tr class="hover:bg-stone-50 transition-colors">
+                                <td class="p-4 font-bold text-red-700">Abarth 1.3T</td>
+                                <td class="p-4 text-red-600 font-semibold">R$ 151.990</td>
+                                <td class="p-4">1.3 Turbo (185 cv)</td>
+                                <td class="p-4">Automático (6 marchas)</td>
+                                <td class="p-4">Alta performance esportiva, design exclusivo e suspensão ajustada.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-900 text-stone-400 py-8 text-center text-sm">
+        <p>Desenvolvido para análise interativa. Valores são estimativas de mercado baseadas em tabelas recentes e podem variar.</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Data Storage ---
+        const pulseData = {
+            drive_mt: { 
+                category: "Entrada / Custo Operacional",
+                name: "Drive 1.3 MT", 
+                price: "R$ 104.990", 
+                engine: "1.3 Firefly Flex (107 cv) - Manual de 5 marchas", 
+                features: [
+                    "Central multimídia 8.4\" com Apple CarPlay e Android Auto sem fio", 
+                    "Faróis e lanternas em LED", 
+                    "Ar-condicionado automático e digital", 
+                    "4 Airbags e Controle de Tração (TC+)"
+                ], 
+                summary: "A opção para quem quer economizar na compra e no posto de combustível. Única versão com pedal de embreagem, ideal para frotistas ou motoristas conservadores.",
+                stats: [9, 4, 5, 5], // Economy, Performance, Comfort, Technology
+                color: 'rgba(249, 115, 22, 0.6)' // Orange
+            },
+            drive_cvt: { 
+                category: "Conforto Urbano Básico",
+                name: "Drive 1.3 CVT", 
+                price: "R$ 111.990", 
+                engine: "1.3 Firefly Flex (107 cv) - Automática CVT (7 marchas)", 
+                features: [
+                    "Tudo da versão MT, MAIS:",
+                    "Câmbio automático CVT", 
+                    "Modo Sport com botão no volante", 
+                    "Console central com apoio de braço",
+                    "Maçanetas e retrovisores na cor do veículo"
+                ],
+                summary: "O SUV automático mais barato da Fiat. Perfeito para o trânsito pesado das cidades sem abrir mão do baixo consumo do motor 1.3.",
+                stats: [8, 4, 6, 5],
+                color: 'rgba(249, 115, 22, 0.6)'
+            },
+            audace: { 
+                category: "O Melhor Custo-Benefício Turbo",
+                name: "Audace 1.0 Turbo", 
+                price: "R$ 122.990", 
+                engine: "1.0 Turbo 200 Flex (130 cv) - Automática CVT", 
+                features: [
+                    "Tudo da versão Drive CVT, MAIS:",
+                    "Frenagem autônoma de emergência (AEB)", 
+                    "Alerta de saída de faixa e comutação automática de farol", 
+                    "Rodas de liga leve aro 16\" diamantadas", 
+                    "Câmera de ré e volante com revestimento em couro"
+                ],
+                summary: "O 'sweet spot' da linha. Traz o ágil motor turbo de 130cv e adiciona o pacote de segurança ADAS, justificando plenamente a diferença de preço.",
+                stats: [6, 7, 7, 8],
+                color: 'rgba(234, 88, 12, 0.6)' // Darker orange
+            },
+            impetus: { 
+                category: "Topo de Linha / Luxo",
+                name: "Impetus 1.0 Turbo", 
+                price: "R$ 135.990", 
+                engine: "1.0 Turbo 200 Flex (130 cv) - Automática CVT", 
+                features: [
+                    "Tudo da versão Audace, MAIS:",
+                    "Painel de instrumentos 100% digital de 7\"", 
+                    "Central multimídia maior de 10.1\" com GPS nativo", 
+                    "Bancos revestidos em couro", 
+                    "Rodas aro 17\", faróis de neblina e teto bitom"
+                ],
+                summary: "Focada em quem não abre mão de tecnologia e estética. O painel digital e a central maior mudam completamente a experiência a bordo.",
+                stats: [5, 7, 9, 9],
+                color: 'rgba(194, 65, 12, 0.6)'
+            },
+            abarth: { 
+                category: "Esportivo Puro-Sangue",
+                name: "Pulse Abarth 1.3T", 
+                price: "R$ 151.990", 
+                engine: "1.3 Turbo 270 Flex (185 cv) - Automática 6 marchas", 
+                features: [
+                    "Motor T270 (185cv) e Câmbio AT6 (não é CVT)", 
+                    "Suspensão, freios e direção com calibração esportiva exclusiva", 
+                    "Escapamento duplo com ronco esportivo", 
+                    "Modo de condução 'Poison'",
+                    "Design externo e interno exclusivos Abarth"
+                ],
+                summary: "Não é apenas uma versão, é quase outro carro. Focado em performance e diversão ao volante, é o SUV compacto mais rápido do Brasil.",
+                stats: [3, 10, 8, 9],
+                color: 'rgba(220, 38, 38, 0.6)' // Red
+            }
+        };
+
+        // --- Chart Instances ---
+        let radarChartInstance = null;
+        let marketChartInstance = null;
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initMarketChart();
+            initRadarChart();
+            selectVersion('drive_mt'); // Load default
+        });
+
+        // --- Core Logic & Interaction ---
+        function selectVersion(versionKey) {
+            const data = pulseData[versionKey];
+            if (!data) return;
+
+            // 1. Update UI Buttons styling
+            document.querySelectorAll('.version-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-500', 'text-white', 'shadow-md', 'bg-red-600');
+                btn.classList.add('text-stone-300');
+                if(btn.id !== 'btn-abarth') {
+                   btn.classList.remove('border-red-500');
+                }
+            });
+            
+            const activeBtn = document.getElementById(`btn-${versionKey}`);
+            activeBtn.classList.remove('text-stone-300');
+            if(versionKey === 'abarth') {
+                activeBtn.classList.add('bg-red-600', 'text-white', 'shadow-md');
+            } else {
+                activeBtn.classList.add('bg-orange-500', 'text-white', 'shadow-md');
+            }
+
+            // 2. Update Text Content
+            document.getElementById('dyn-category').textContent = data.category;
+            
+            const nameEl = document.getElementById('dyn-name');
+            nameEl.textContent = data.name;
+            if(versionKey === 'abarth') nameEl.className = "text-4xl font-extrabold text-red-600 mb-2";
+            else nameEl.className = "text-4xl font-extrabold text-stone-900 mb-2";
+
+            const priceEl = document.getElementById('dyn-price');
+            priceEl.textContent = data.price;
+            if(versionKey === 'abarth') priceEl.className = "text-3xl font-light text-red-700 mb-8";
+            else priceEl.className = "text-3xl font-light text-orange-600 mb-8";
+
+            document.getElementById('dyn-engine').textContent = data.engine;
+            document.getElementById('dyn-summary').textContent = `"${data.summary}"`;
+
+            // 3. Update Features List
+            const featuresList = document.getElementById('dyn-features');
+            featuresList.innerHTML = ''; // Clear
+            data.features.forEach((feature, index) => {
+                const li = document.createElement('li');
+                li.className = "flex gap-2 text-sm md:text-base";
+                li.innerHTML = `<span class="${versionKey === 'abarth' ? 'text-red-500' : 'text-orange-500'}">${index === 0 && versionKey !== 'drive_mt' && versionKey !== 'abarth' ? '➕' : '🔹'}</span> <span>${feature}</span>`;
+                featuresList.appendChild(li);
+            });
+
+            // 4. Update Radar Chart
+            updateRadarChart(data);
+        }
+
+        function initMarketChart() {
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            marketChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['T-Cross', 'Tracker', 'Creta', 'Kicks', 'Nivus', 'Pulse', 'Fastback'],
+                    datasets: [{
+                        label: 'Participação Relativa no Segmento',
+                        data: [15, 14, 13, 11, 10, 9, 8],
+                        backgroundColor: [
+                            '#d6d3d1', '#d6d3d1', '#d6d3d1', '#d6d3d1', '#d6d3d1', '#ea580c', '#d6d3d1'
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return context.raw + '% do segmento'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { display: false, beginAtZero: true },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function initRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Economia', 'Desempenho', 'Conforto', 'Tecnologia'],
+                    datasets: [{
+                        label: 'Pontuação',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(249, 115, 22, 0.4)',
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                        pointBackgroundColor: 'rgba(249, 115, 22, 1)',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0,0,0,0.1)' },
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            pointLabels: {
+                                font: { family: 'Inter', size: 12, weight: 'bold' },
+                                color: '#57534e'
+                            },
+                            ticks: { display: false, min: 0, max: 10 }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updateRadarChart(data) {
+            if (radarChartInstance) {
+                radarChartInstance.data.datasets[0].data = data.stats;
+                radarChartInstance.data.datasets[0].backgroundColor = data.color.replace('0.6', '0.4');
+                radarChartInstance.data.datasets[0].borderColor = data.color.replace('0.6', '1');
+                radarChartInstance.data.datasets[0].pointBackgroundColor = data.color.replace('0.6', '1');
+                radarChartInstance.update();
+            }
+        }
+    </script>
+</body>
+</html>
